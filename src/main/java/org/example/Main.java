@@ -39,6 +39,7 @@ public class Main {
      * @return ключ
      */
     private static String getKey(String column, int index) {
+        if(column.isEmpty()) return null;
         if (column.length() <= 2) return null;
         String value = column.substring(1, column.length() - 1);
         return value + "&" + index;
@@ -51,6 +52,7 @@ public class Main {
      * @return true - если значение корректно, иначе false
      */
     private static boolean checkValue(String column) {
+        if(column.isEmpty()) return true;
         if (column.length() < 2) return false;
         String value = column.substring(1, column.length() - 1);
         if (value.contains("\"")) return false;
@@ -64,7 +66,7 @@ public class Main {
      *            повторяющихся значений в стобце
      * @param list - список строк
      */
-    private static void unionToGroup(HashMap<String, ArrayList<Integer>> map, ArrayList<ArrayList<String>> list) {
+    private static void unionToGroup(HashMap<String, ArrayList<Integer>> map, List<String[]> list) {
         // собираем все списки индексов строк, в которых есть одинаковые столбцы в каких либо колонках, в один массив
         ArrayList<Integer>[] arr = new ArrayList[map.size()];
         int k = 0;
@@ -92,7 +94,7 @@ public class Main {
                 .toList();
 
         int n = 1;
-        try(FileWriter writer = new FileWriter("groups.txt")){
+        try(FileWriter writer = new FileWriter("groups1.txt")){
             writer.write(groups.size() + "\n");
             for (ArrayList<Integer> group : groups) {
                 writer.write("Группа " + n++ + "\n");
@@ -115,29 +117,25 @@ public class Main {
         long start = System.nanoTime();
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String inputLine;
-            ArrayList<ArrayList<String>> inputList = new ArrayList<>();
+            List<String[]> list = new ArrayList<>();
+            HashSet<String> set = new HashSet<>();
             loop:
             while ((inputLine = reader.readLine()) != null) {
-                ArrayList<String> line = new ArrayList<>(Arrays.asList(inputLine.split(";")));
-                for (String column : line) {
-                    if (!checkValue(column)) continue loop;
-                }
-                inputList.add(line);
-            }
-            //удаляем дубликаты строк
-            HashSet<ArrayList<String>> set = new HashSet<>();
-            ArrayList<ArrayList<String>> list = new ArrayList<>();
-            for (ArrayList<String> value : inputList) {
-                if (set.add(value)) {
-                    list.add(value);
+                if (set.add(inputLine)) {
+                    String[] line = inputLine.split(";");
+                    //List<String> line = Arrays.asList(inputLine.split(";"));
+                    for (String column : line) {
+                        if (!checkValue(column)) continue loop;
+                    }
+                    list.add(line);
                 }
             }
             //создаем HashMap, где key - "значение&номер столбца", value - количество повторяющихся значений в стобце
             HashMap<String, Integer> countMap = new HashMap<>();
             for (int i = 0; i < list.size(); i++) {
-                ArrayList<String> line = list.get(i);
-                for (int j = 0; j < line.size(); j++) {
-                    String column = line.get(j);
+                String[] line = list.get(i);
+                for (int j = 0; j < line.length; j++) {
+                    String column = line[j];
                     String key = getKey(column, j);
                     if (key == null) continue;
                     int count = 1;
@@ -150,9 +148,9 @@ public class Main {
             //создаем HashMap, где key - "значение&номер столбца", value - множество индексов строк повторяющихся значений в стобце
             HashMap<String, ArrayList<Integer>> rowsMap = new HashMap<>();
             for (int i = 0; i < list.size(); i++) {
-                ArrayList<String> line = list.get(i);
-                for (int j = 0; j < line.size(); j++) {
-                    String column = line.get(j);
+                String[] line = list.get(i);
+                for (int j = 0; j < line.length; j++) {
+                    String column = line[j];
                     String key = getKey(column, j);
                     if (key == null) continue;
                     // пропускаем значения, которые встречаются только в одной строке
