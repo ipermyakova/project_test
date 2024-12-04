@@ -123,7 +123,6 @@ public class Main {
             while ((inputLine = reader.readLine()) != null) {
                 if (set.add(inputLine)) {
                     String[] line = inputLine.split(";");
-                    //List<String> line = Arrays.asList(inputLine.split(";"));
                     for (String column : line) {
                         if (!checkValue(column)) continue loop;
                     }
